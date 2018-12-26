@@ -54,6 +54,7 @@
 			const addPlayerInput = document.getElementById('addPlayer');
 			// set the players
 			players = getPlayers();
+			playersP.innerHTML = players.join(', ');
 			//if we don't have players, initalize them
 			if(!players) players = setPlayers([]);
 
