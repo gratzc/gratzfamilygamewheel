@@ -65,8 +65,21 @@
 
 			theWheel = buildWheel(remainingPlayers);
 
+			function getColors(numOfColors) {
+				var colors = localStorage.getItem('WheelFamilyColors');
+				if(!colors) colors = "[]";
+				colors = JSON.parse(colors)
+				while (colors.length < numOfColors) {
+					let color = Math.random().toString(16).substr(-6);
+					colors.push(color);
+				}
+				localStorage.setItem('WheelFamilyColors',JSON.stringify(colors));
+				return colors;
+			}
+
 			function getPlayers() {
 				var players = localStorage.getItem('WheelFamilyPlayers');
+				if(!players) players = "[]";
 				return JSON.parse(players);
 			}
 
@@ -90,9 +103,11 @@
 			}
 
 			function setupSegments(remainingPlayers){
-				const segments = remainingPlayers.map(p => {
+				const colors = getColors(remainingPlayers.length);
+				const segments = remainingPlayers.map((p,i) => {
+					const playerIndex = players.indexOf(p);
 					const segment = {
-						fillStyle: '#'+Math.random().toString(16).substr(-6),
+						fillStyle: '#'+colors[playerIndex],
 						text: p
 					};
 					return segment
