@@ -44,60 +44,75 @@
 			</table>
 		</div>
 		<script>
-			// Create new wheel object specifying the parameters at creation time.
-			var theWheel = new Winwheel({
-				'numSegments'  : 5,     // Specify number of segments.
-				'outerRadius'  : 212,   // Set outer radius so wheel fits inside the background.
-				'textFontSize' : 28,    // Set font size as desired.
-				'segments'     :        // Define segments including colour and text.
-				[
-				   {'fillStyle' : '#eae56f', 'text' : 'Emma'},
-				   {'fillStyle' : '#89f26e', 'text' : 'Abi'},
-				   {'fillStyle' : '#7de6ef', 'text' : 'Zion'},
-				   {'fillStyle' : '#e7706f', 'text' : 'Mom'},
-				   {'fillStyle' : 'chocolate', 'text' : 'Dad'}
-				],
-				'animation' :           // Specify the animation to use.
-				{
-					'type'     : 'spinToStop',
-					'duration' : 5,     // Duration in seconds.
-					'spins'    : 8,     // Number of complete spins.
-					'callbackFinished' : alertPrize
-				}
-			});
+			// set the players
+			var players = ['Emma','Abi','Zion','Mom','Dad'];
+			// set the remaining players from localstorage
+			remainingPlayers = getRemainingPlayers();
 
-			// Vars used by the code in this page to do power controls.
-			var wheelPower    = 0;
-			var wheelSpinning = false;
+			//if we don't have players, initalize them
+			if(!remainingPlayers) remainingPlayers = setRemainingPlayers(players);
+
+			theWheel = buildWheel(remainingPlayers);
+
+			function getRemainingPlayers() {
+				var remainingPlayers = localStorage.getItem('WheelFamilyPlayers');
+				return JSON.parse(remainingPlayers);
+			}
+
+			function setRemainingPlayers(remainingPlayers) {
+				localStorage.setItem('WheelFamilyPlayers',JSON.stringify(remainingPlayers));
+				remainingPlayers = localStorage.getItem('WheelFamilyPlayers');
+				return JSON.parse(remainingPlayers);
+			}
+
+			function setupSegments(remainingPlayers){
+				const segments = remainingPlayers.map(p => {
+					const segment = {
+						fillStyle: '#'+Math.random().toString(16).substr(-6),
+						text: p
+					};
+					return segment
+				});
+				return segments;
+			}
+
+			function buildWheel(remainingPlayers) {
+				// Vars used by the code in this page to do power controls.
+				wheelPower    = 0;
+				wheelSpinning = false;
+				const segments = setupSegments(remainingPlayers);
+				// Create new wheel object specifying the parameters at creation time.
+				const theWheel = new Winwheel({
+					'numSegments'  : remainingPlayers.length,     // Specify number of segments.
+					'outerRadius'  : 212,   // Set outer radius so wheel fits inside the background.
+					'textFontSize' : 28,    // Set font size as desired.
+					'segments'     : segments,
+					'animation' :           // Specify the animation to use.
+					{
+						'type'     : 'spinToStop',
+						'duration' : 5,     // Duration in seconds.
+						'spins'    : 8,     // Number of complete spins.
+						'callbackFinished' : alertPrize
+					}
+				});
+				return theWheel;
+			}
 
 			// -------------------------------------------------------
 			// Function to handle the onClick on the power buttons.
 			// -------------------------------------------------------
-			function powerSelected(powerLevel)
-			{
+			function powerSelected(powerLevel) {
 				// Ensure that power can't be changed while wheel is spinning.
-				if (wheelSpinning == false)
-				{
+				if (wheelSpinning == false) {
 					// Reset all to grey incase this is not the first time the user has selected the power.
 					document.getElementById('pw1').className = "";
 					document.getElementById('pw2').className = "";
 					document.getElementById('pw3').className = "";
 
 					// Now light up all cells below-and-including the one selected by changing the class.
-					if (powerLevel >= 1)
-					{
-						document.getElementById('pw1').className = "pw1";
-					}
-
-					if (powerLevel >= 2)
-					{
-						document.getElementById('pw2').className = "pw2";
-					}
-
-					if (powerLevel >= 3)
-					{
-						document.getElementById('pw3').className = "pw3";
-					}
+					if (powerLevel >= 1) document.getElementById('pw1').className = "pw1";
+					if (powerLevel >= 2) document.getElementById('pw2').className = "pw2";
+					if (powerLevel >= 3) document.getElementById('pw3').className = "pw3";
 
 					// Set wheelPower var used when spin button is clicked.
 					wheelPower = powerLevel;
@@ -111,25 +126,14 @@
 			// -------------------------------------------------------
 			// Click handler for spin button.
 			// -------------------------------------------------------
-			function startSpin()
-			{
+			function startSpin() {
 				// Ensure that spinning can't be clicked again while already running.
-				if (wheelSpinning == false)
-				{
+				if (wheelSpinning == false) {
 					// Based on the power level selected adjust the number of spins for the wheel, the more times is has
 					// to rotate with the duration of the animation the quicker the wheel spins.
-					if (wheelPower == 1)
-					{
-						theWheel.animation.spins = 3;
-					}
-					else if (wheelPower == 2)
-					{
-						theWheel.animation.spins = 8;
-					}
-					else if (wheelPower == 3)
-					{
-						theWheel.animation.spins = 15;
-					}
+					if (wheelPower == 1) theWheel.animation.spins = 3;
+					else if (wheelPower == 2) theWheel.animation.spins = 8;
+					else if (wheelPower == 3) theWheel.animation.spins = 15;
 
 					// Disable the spin button so can't click again while wheel is spinning.
 					document.getElementById('spin_button').src       = "spin_off.png";
@@ -147,8 +151,7 @@
 			// -------------------------------------------------------
 			// Function for reset button.
 			// -------------------------------------------------------
-			function resetWheel()
-			{
+			function resetWheel() {
 				theWheel.stopAnimation(false);  // Stop the animation, false as param so does not call callback function.
 				theWheel.rotationAngle = 0;     // Re-set the wheel angle to 0 degrees.
 				theWheel.draw();                // Call draw to render changes to the wheel.
@@ -158,14 +161,19 @@
 				document.getElementById('pw3').className = "";
 
 				wheelSpinning = false;          // Reset to false to power buttons and spin can be clicked again.
+
+				remainingPlayers = setRemainingPlayers(players);
+				theWheel = buildWheel(remainingPlayers);
 			}
 
 			// -------------------------------------------------------
 			// Called when the spin animation has finished by the callback feature of the wheel because I specified callback in the parameters
 			// note the indicated segment is passed in as a parmeter as 99% of the time you will want to know this to inform the user of their prize.
 			// -------------------------------------------------------
-			function alertPrize(indicatedSegment)
-			{
+			function alertPrize(indicatedSegment) {
+				remainingPlayers = remainingPlayers.filter(p => p != indicatedSegment.text);
+				remainingPlayers = setRemainingPlayers(remainingPlayers);
+				theWheel = buildWheel(remainingPlayers);
 				// Do basic alert of the segment text. You would probably want to do something more interesting with this information.
 				alert(`The next game is ${indicatedSegment.text}'s game`);
 			}
